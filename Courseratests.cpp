@@ -37,11 +37,11 @@ int main() {
 		unsigned int code;
 		cin >> operational_command >> code;// reading operational command name
 		code--;
-		if (operational_command == "name" && code > 0 && code < students.size()){
+		if (operational_command == "name" && code >= 0 && code < students.size()){
 			cout << students[code].first_name
 					<<  " " << students[code].second_name
 					<< endl;
-		} else if (operational_command == "date" && code > 0 && code < students.size()){
+		} else if (operational_command == "date" && code >= 0 && code < students.size()){
 			cout << students[code].day
 					<< "." << students[code].month
 					<< "." << students[code].year
