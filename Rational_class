@@ -1,0 +1,182 @@
+#include "stdafx.h"
+
+#include <cmath>
+#include <string>
+#include <map>
+#include <vector>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <set>
+
+using namespace std;
+
+int GreatestCommonDivisor(int a, int b){
+	while (a > 0 && b > 0) {
+		if (a > b) {
+			a %= b;
+		}
+		else {
+			b %= a;
+		}
+
+	}
+	return a + b;
+}
+
+class Rational {
+public:
+	Rational() {
+		numerator = 0;
+		denominator = 1;
+	}
+	Rational(const int& numerator_, const int& denominator_) {
+		if (abs(numerator_) > 0) {
+			int sign = 1;
+			if (numerator_ < 0) sign *= -1;
+			if (denominator_ < 0) sign *= -1;
+			int tmp;
+			tmp = GreatestCommonDivisor(abs(numerator_), abs(denominator_));
+			numerator = sign * abs(numerator_) / tmp;
+			denominator = abs(denominator_) / tmp;
+
+		} else {
+			numerator = 0;
+			denominator = 1;
+		}
+	}
+
+	int Numerator() const {
+		return numerator;
+	}
+	int Denominator() const {
+		return denominator;
+	}
+private:
+	int numerator;
+	int denominator;
+};
+
+
+bool operator ==(const Rational& lhs, const Rational& rhs) {
+	if (lhs.Numerator() == rhs.Numerator() && lhs.Denominator() == rhs.Denominator()) {
+		return true;
+	}
+	return false;
+}
+bool operator >(const Rational& lhs, const Rational& rhs) {
+	if (lhs.Denominator() != rhs.Denominator()) {
+		return lhs.Numerator() * rhs.Denominator() > rhs.Numerator() * lhs.Denominator();
+	}
+	return lhs.Numerator() > rhs.Numerator();
+}
+bool operator <(const Rational& lhs, const Rational& rhs) {
+	if (lhs.Denominator() != rhs.Denominator()) {
+		return lhs.Numerator() * rhs.Denominator() < rhs.Numerator() * lhs.Denominator();
+	}
+	return lhs.Numerator() < rhs.Numerator();
+}
+bool operator >=(const Rational& lhs, const Rational& rhs) {
+	if (lhs.Denominator() != rhs.Denominator()) {
+		return lhs.Numerator() * rhs.Denominator() > rhs.Numerator() * lhs.Denominator();
+	}
+	return lhs.Numerator() > rhs.Numerator();
+}
+bool operator <=(const Rational& lhs, const Rational& rhs) {
+	if (lhs.Denominator() != rhs.Denominator()) {
+		return lhs.Numerator() * rhs.Denominator() < rhs.Numerator() * lhs.Denominator();
+	}
+	return lhs.Numerator() < rhs.Numerator();
+}
+Rational operator +(const Rational& lhs, const Rational& rhs) {
+	Rational result;
+	if (lhs.Denominator() != rhs.Denominator()) {
+		result = { lhs.Numerator() * rhs.Denominator()
+			+ rhs.Numerator() * lhs.Denominator(),
+			lhs.Denominator() * rhs.Denominator() };
+	}
+	else {
+		result = { lhs.Numerator() + rhs.Numerator(),
+			lhs.Denominator() };
+	}
+	return result;
+}
+Rational operator -(const Rational& lhs, const Rational& rhs) {
+	Rational result;
+	if (lhs.Denominator() != rhs.Denominator()) {
+		result = { lhs.Numerator() * rhs.Denominator()
+			- rhs.Numerator() * lhs.Denominator(),
+			lhs.Denominator() * rhs.Denominator() };
+	}
+	else {
+		result = { lhs.Numerator() - rhs.Numerator(),
+			lhs.Denominator() };
+	}
+	return result;
+}
+Rational operator *(const Rational& lhs, const Rational& rhs) {
+	Rational result;
+	result = { lhs.Numerator() * rhs.Numerator(),
+		lhs.Denominator() * rhs.Denominator() };
+	return result;
+}
+Rational operator /(const Rational& lhs, const Rational& rhs) {
+	Rational result;
+	result = { lhs.Numerator() * rhs.Denominator(),
+		rhs.Numerator() * lhs.Denominator() };
+	return result;
+}
+ostream& operator <<(ostream& stream, const Rational& rational) {
+	stream << rational.Numerator() << "/" << rational.Denominator();
+	return stream;
+}
+istream& operator >>(istream& stream, Rational& rational) {
+	int num = 0;
+	int denom = 0;
+	int test = stream.peek();
+	if (stream) {
+		stream >> num;
+		stream.ignore(1);
+		stream >> denom;
+	}
+	if (denom != 0) {
+		rational = { num, denom };
+	}
+	return stream;
+}
+
+int main() {
+	{
+		const set<Rational> rs = { { 1, 2 },{ 1, 25 },{ 3, 4 },{ 3, 4 },{ 1, 2 } };
+		if (rs.size() != 3) {
+			cout << "Wrong amount of items in the set" << endl;
+			return 1;
+		}
+
+		vector<Rational> v;
+		for (auto x : rs) {
+			v.push_back(x);
+		}
+		if (v != vector<Rational>{ {1, 25}, { 1, 2 }, { 3, 4 }}) {
+			cout << "Rationals comparison works incorrectly" << endl;
+			return 2;
+		}
+	}
+
+	{
+		map<Rational, int> count;
+		++count[{1, 2}];
+		++count[{1, 2}];
+
+		++count[{2, 3}];
+
+		if (count.size() != 2) {
+			cout << "Wrong amount of items in the map" << endl;
+			return 3;
+		}
+	}
+
+
+	cout << "OK" << endl;
+	return 0;
+}
