@@ -5,35 +5,54 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <set>
 
 using namespace std;
 
+void WrongChar(stringstream& ss, const string& str, const char& a){
+	if (ss.peek() != a){
+		string error = "Wrong date format: " + str;
+		throw invalid_argument(error);
+	}
+	ss.ignore(1);
+}
+
 void WrongDateFormat(const string& str){
-	stringstream ss;
+	stringstream ss(str);
+	int y = 0;
+	int m = 0;
+	int d = 0;
+	ss >> y;
+	WrongChar(ss, str, '-');
+	ss >> m;
+	if (m <= 0 || m > 12){
+		string error = "Month value is invalid: " + to_string(m);
+		throw runtime_error(error);
+	}
+	WrongChar(ss, str, '-');
+	ss >> d;
+	if (d <= 0 || d > 31){
+		string error = "Day value is invalid: " + to_string(d);
+		throw runtime_error(error);
+	}
+	const char& a = str[str.size() - 1];
+	if (int(a) < 47 || int(a) > 58){
+		string error = "Wrong date format: " + str;
+		throw invalid_argument(error);
+	}
 }
 
 class Date {
 public:
 	Date(const string& input_string){
-		//WrongDateFormat(input_string);
-		int new_year, new_month, new_day;
+		WrongDateFormat(input_string);
 		stringstream ss;
 		ss << input_string;
-		ss >> new_year;
+		ss >> year;
 		ss.ignore(1);
-		ss >> new_month;
+		ss >> month;
 		ss.ignore(1);
-		ss >> new_day;
-		if (new_month <= 0 || new_month > 12){
-			string error = "Month value is invalid: " + to_string(new_month);
-				throw runtime_error(error);
-		} else if (new_day <= 0 || new_day > 31){
-			string error = "Day value is invalid: " + to_string(new_day);
-			throw runtime_error(error);
-		}
-		year = new_year;
-		month = new_month;
-		day = new_day;
+		ss >> day;
 		stringstream ss2;
 		ss2 << setw(4) << setfill('0') << to_string(year) << "-"
 				<< setw(2) << setfill('0') << to_string(month) << "-"
@@ -51,12 +70,6 @@ public:
 		return day;
 	}
 	string GetDate() const{
-//		stringstream ss;
-//		string str;
-//		ss << setw(4) << setfill('0') << to_string(year)
-//				<< setw(2) << setfill('0') << to_string(month)
-//				<< setw(2) << setfill('0') << to_string(day);
-//		ss >> str;
 		return date;
 	}
 private:
@@ -77,29 +90,47 @@ bool operator<(const Date& lhs, const Date& rhs){
 class Database {
 public:
 	void AddEvent(const Date& date, const string& event){
-		vector<string> temp;
-		//temp = database[date];
-		//temp.push_back(event);
-		//sort(begin(temp), end(temp));
-		database[date].push_back(event);
-		 //else {
-//			tmp.push_back(event);
-//			database[date] = tmp;
-//		}
-
+		vector<string>& tmp = database[date];
+		tmp.push_back(event);
+		sort(begin(tmp), end(tmp));
 	}
-	bool DeleteEvent(const Date& date, const string& event);
-	int  DeleteDate(const Date& date);
 
-	/* ??? */ Find(const Date& date) const;
+	bool DeleteEvent(const Date& date, const string& event){
+		vector<string>& tmp = database[date];
+		for (size_t i = 0; i < tmp.size(); ++i){
+			if (tmp[i] == event){
+				tmp.erase(tmp.begin() + i);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	int  DeleteDate(const Date& date){
+		int count = database[date].size();
+//		for (size_t i = 0; i < database[date].size()){
+//			count++;
+//		}
+		database.erase(date);
+		return count;
+	}
+
+	void Find(const Date& date) const{
+		vector<string> tmp;
+		if (database.count(date) > 0) {
+		    tmp = database.at(date);
+		}
+		for (const auto& a : tmp){
+			cout << a << endl;
+		}
+	}
 
 	void Print() const{
 		for(const auto& date : database){
-			cout << date.first.GetDate() << " ";
 			for(const auto& event : date.second){
-				cout << event << " ";
+				cout << date.first.GetDate() << " "
+						<< event << endl;
 			}
-			cout << endl;
 		}
 	}
 private:
@@ -107,34 +138,54 @@ private:
 };
 void CommandParse(const string& command, Database& db){
 	stringstream ss;
-	cout << command << endl;
 	ss << command;
 	string cmd;
  	ss >> cmd;
- 	cout << cmd << endl;
 	if (cmd == "Add"){
 		string date, event;
 		ss >> date >> event;
-		cout << date << " || " << event << endl;
+		WrongDateFormat(date);
+		if (event == ""){
+			string error = "Wrong date format: " + date;
+			throw invalid_argument(error);
+		}
 		db.AddEvent({date}, event);
 	} else if (cmd == "Print"){
 		db.Print();
 	} else if (cmd == "Find"){
-
+		string date;
+		ss >> date;
+		db.Find(date);
 	} else if (cmd == "Del"){
+		string date, event;
+		ss >> date >> event;
+		if (event == ""){
+			int n = db.DeleteDate(date);
+			cout << "Deleted " << n << " events" << endl;
+		} else {
+			if (db.DeleteEvent(date, event)){
+				cout << "Deleted successfully" << endl;
+			} else {
+				cout << "Event not found" << endl;
+			}
+		}
+	} else if(cmd == "") {
 
+	} else{
+		string error = "Unknown command: " + cmd;
+		throw runtime_error(error);
 	}
 }
 
 int main() {
 	Database db;
 	string command;
-	//db.AddEvent({"0-1-2"}, "event");
-
 	while (getline(cin, command)) {
-		CommandParse(command, db);
-		if (command == "Stop"){
-			break;
+		try {
+			CommandParse(command, db);
+		}
+		catch (exception& ex){
+			cout << ex.what() << endl;
 		}
 	}
 
