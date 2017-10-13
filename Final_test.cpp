@@ -80,11 +80,13 @@ private:
 };
 
 bool operator<(const Date& lhs, const Date& rhs){
-	return ((lhs.GetYear() < rhs.GetYear())
+	return lhs.GetYear() * 372 + lhs.GetMonth()*31 + lhs.GetDay() <
+			rhs.GetYear() * 372 + rhs.GetMonth()*31 + rhs.GetDay();
+			/*((lhs.GetYear() < rhs.GetYear())
 			|| (lhs.GetYear() == rhs.GetYear()
 			&& lhs.GetMonth() < rhs.GetMonth())
 			|| (lhs.GetMonth() == rhs.GetMonth()
-			&& lhs.GetDay() < rhs.GetDay())) ? true :false;
+			&& lhs.GetDay() < rhs.GetDay())) ? true :false;*/
  }
 
 class Database {
@@ -97,17 +99,31 @@ public:
 
 	bool DeleteEvent(const Date& date, const string& event){
 		vector<string>& tmp = database[date];
+		vector<string> duplicate;
 		for (size_t i = 0; i < tmp.size(); ++i){
-			if (tmp[i] == event){
-				tmp.erase(tmp.begin() + i);
-				return true;
+			if (tmp[i] != event){
+				duplicate.push_back(tmp[i]);
 			}
+		}
+		if (duplicate.size() == 0){
+			database.erase(date);
+			return true;
+		} else if (tmp.size() > duplicate.size()){
+			tmp.clear();
+			tmp = duplicate;
+			return true;
 		}
 		return false;
 	}
 
 	int  DeleteDate(const Date& date){
-		int count = database[date].size();
+
+		int count = 0;
+		if (database.count(date) == 0){
+			return 0;
+		} else {
+			count = database[date].size();
+		}
 //		for (size_t i = 0; i < database[date].size()){
 //			count++;
 //		}
