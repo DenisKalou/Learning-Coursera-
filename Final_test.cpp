@@ -93,8 +93,16 @@ class Database {
 public:
 	void AddEvent(const Date& date, const string& event){
 		vector<string>& tmp = database[date];
-		tmp.push_back(event);
-		sort(begin(tmp), end(tmp));
+		bool flag = true;
+		for (const auto& item : tmp){
+			if (item == event){
+				flag = false;
+			}
+		}
+		if (flag){
+			tmp.push_back(event);
+			sort(begin(tmp), end(tmp));
+		}
 	}
 
 	bool DeleteEvent(const Date& date, const string& event){
@@ -105,10 +113,7 @@ public:
 				duplicate.push_back(tmp[i]);
 			}
 		}
-		if (duplicate.size() == 0){
-			database.erase(date);
-			return true;
-		} else if (tmp.size() > duplicate.size()){
+		if (tmp.size() > duplicate.size()){
 			tmp.clear();
 			tmp = duplicate;
 			return true;
@@ -197,6 +202,9 @@ int main() {
 	Database db;
 	string command;
 	while (getline(cin, command)) {
+		if (command == "Stop"){
+			break;
+		}
 		try {
 			CommandParse(command, db);
 		}
